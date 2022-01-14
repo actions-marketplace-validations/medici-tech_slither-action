@@ -1,9 +1,8 @@
-name: 'Slither Cloud'
-description: 'Runs Slither in the cloud'
+name: 'Medici CI - Slither'
+description: 'Runs Slither on provided Solidity files'
 inputs:
-  slither-cloud-uri:
-    description: 'The URL of the Slither cloud instance'
-    required: true
+  contracts-path:
+    description: 'Path to Solidity smart contract(s)'
   truffle-version:
     description: >
       The version of Truffle to run on the codebase, such as "truffle@5.0.0".
@@ -11,11 +10,12 @@ inputs:
     required: true
     default: 'truffle'
 outputs:
-  sarif:
-    description: 'Path to the resulting SARIF JSON file'
+  slither:
+    description: 'Slither static analysis output'
 runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
-    - ${{ inputs.slither-cloud-uri }}
-    - ${{ inputs.truffle-version }}
+    - {{ inputs.contracts-path }}
+    - --truffle-version={{ inputs.truffle-version }}
+    - --json

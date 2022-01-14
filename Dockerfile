@@ -1,17 +1,28 @@
-ARG PYTHON_VERSION=3.8
+FROM ubuntu:bionic
 
-FROM python:${PYTHON_VERSION}
+LABEL name=slither
+LABEL src="https://github.com/trailofbits/slither"
+LABEL creator=trailofbits
+LABEL desc="Static Analyzer for Solidity"
 
-ARG NODE_VERSION=10
+RUN apt-get update \
+  && apt-get upgrade -y \
+  && apt-get install -y git python3 python3-setuptools python3-pip wget software-properties-common
 
-#ARG NVM_VERSION=0.35.3
-#RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh | bash
-#ENV NVM_DIR="/root/.nvm"
-#RUN . /root/.nvm/nvm.sh && nvm install ${NODE_VERSION}
-RUN curl -sL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && apt-get install -y nodejs
+RUN wget https://github.com/ethereum/solidity/releases/download/v0.4.25/solc-static-linux \
+ && chmod +x solc-static-linux \
+ && mv solc-static-linux /usr/bin/solc
 
-RUN pip install crytic-compile
+RUN useradd -m slither
+USER slither
 
-COPY entrypoint.sh /entrypoint.sh
+# If this fails, the solc-static-linux binary has changed while it should not.
+RUN [ "c9b268750506b88fe71371100050e9dd1e7edcf8f69da34d1cd09557ecb24580  /usr/bin/solc" = "$(sha256sum /usr/bin/solc)" ]
 
-ENTRYPOINT ["/entrypoint.sh"]
+COPY --chown=slither:slither . /home/slither/slither
+WORKDIR /home/slither/slither
+
+RUN pip3 install slither-analyzer --user
+ENV PATH="/home/slither/.local/bin:${PATH}"
+
+CMD slither
